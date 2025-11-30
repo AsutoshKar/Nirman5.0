@@ -1,0 +1,75 @@
+from ._anvil_designer import DoctorSignupTemplate
+from anvil import *
+import anvil.server
+
+class DoctorSignup(DoctorSignupTemplate):
+
+  def __init__(self, **properties):
+    self.init_components(**properties)
+
+
+  def btn_signup_click(self, **event_args):
+    name = self.txt_signup_name.text
+    email = self.txt_signup_email.text
+    password = self.txt_signup_password.text
+    confirm = self.txt_signup_confirm.text
+    specialization = self.txt_signup_specialization.text
+    experience = self.txt_signup_experience.text
+    phone = self.txt_signup_phone.text
+    registration= self.txt_signup_reg.text
+    meet_link = self.txt_meet_link.text
+
+    if not (name and email and password and specialization and phone and experience and registration):
+      alert("Please fill all required fields.")
+      return
+
+    if password != confirm:
+      alert("Passwords do not match!")
+      return
+
+    result = anvil.server.call(
+      "doctor_signup",
+      name, email, password, specialization, experience, phone, registration, meet_link
+    )
+
+    if result == "EXISTS":
+      alert("An account with this email already exists.")
+    else:
+      alert("Signup successful! Your account is under approval.")
+      open_form('Login.DoctorLogin')
+
+
+  def btn_back_login_click(self, **event_args):
+    open_form('Login.DoctorLogin')
+
+ #Doccard
+from ._anvil_designer import DoctorCardTemplate
+from anvil import *
+
+class DoctorCard(DoctorCardTemplate):
+  def __init__(self, **properties):
+    self.init_components(**properties)
+
+  def form_show(self, **event_args):
+    if not self.item:
+      print("No item passed to DoctorCard")
+      return
+
+    doctor = self.item.get("doctor")
+    self.patient = self.item.get("patient")
+
+    if not doctor:
+      print("Doctor missing in item:", self.item)
+      return
+
+    self.doctor = doctor  # store doctor row
+
+    # Fill labels
+    self.label_name.text = doctor['name']
+    self.label_specialization.text = doctor['specialization']
+    self.label_experience.text = f"{doctor['experience']} years"
+    self.label_phone.text = doctor['phone']
+    self.label_meet.text = doctor['meet_link']
+
+  def btn_book_click(self, **event_args):
+    open_form('BookAppointment', patient=self.patient, doctor=self.doctor)
